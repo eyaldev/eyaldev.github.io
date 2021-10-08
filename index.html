@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <link rel="icon" href="favicon.ico">
+        <title>SpeedMath</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            .animated{
+                transition-property: left top width height opacity;
+                transition-duration: 1s; 
+                transition-timing-function: ease-in;
+            }            }
+        </style>
+        <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+
+        <script type="text/javascript">
+            $(function () {
+                var currentScore = 0;
+                var candiesEaten = 0;
+                var gameState = new GameState();
+                var $scoreVisualizationDiv = $("#scoreVisualizationDiv");
+                var scoreCandyImage=$("#scoreCandyImage");
+                var Sounds = {
+                    wrongAnswer: new Audio("Bleep.mp3"),
+                    correctAnswer: new Audio("Correct.mp3")
+
+                };
+                Sounds.correctAnswer.volume = 0.3;
+                var $muncherImage = $("#muncherImage");
+                var $remainingCandies = {};
+                for (var c = 0; c <= gameState.MAX_NUMBER; c++) {
+                    var name = "" + c;
+                    if (name.length < 2) {
+                        name = " " + name;
+                    }
+                    var $answer = $('<input type="button" value="' + name + '" class="header" style="padding:0px;margin: 2px; font-size: .6cm; font-family: monospace" />');
+                    (function (c) {
+                        $answer.click(function () {
+                            if (tryAnswer(c)) {
+                                makeFireworks(this);
+                            }
+                        })
+                    })(c);
+                    $answer.appendTo($("#answersDiv"));
+                    if ((c % 10) == 9) {
+                        $("#answersDiv").append("<br>");
+                    }
+                }
+                for (var c = 1; c < 13; c++) {
+                    var $candyImage = $('<image src="candy'+c%6+'.png" width="7%" style="position:absolute;left:' + (c * 7) + '%"/>');
+                    $remainingCandies[c] = $candyImage;
+                    $candyImage.appendTo($scoreVisualizationDiv);
+                }
+
+                askNewQuestion();
+                drawScore();
+                timerScore();
+                function timerScore() {
+                    currentScore *= 0.99;
+                    drawScore();
+                    setTimeout(timerScore, 500);
+                }
+
+                function tryAnswer(solution) {
+                    var correct = gameState.tryAnswer(solution);
+                    if (correct) {
+                        currentScore++;
+                        askNewQuestion();
+                        Sounds.correctAnswer.currentTime = 0;
+                        Sounds.correctAnswer.play();
+
+                    } else {
+                        currentScore--;
+                        if (currentScore < 0) {
+                            currentScore = 0;
+                        }
+                        Sounds.wrongAnswer.currentTime = 0;
+                        Sounds.wrongAnswer.play();
+                    }
+                    drawScore();
+                    return correct;
+                }
+
+                function mathSign(x) { return x ? x < 0 ? -1 : 1 : 0; }
+
+                function makeFireworks(parentElement) {
+                    var offset = $(parentElement).offset();
+                    var r=400;
+                    var $starImages = [];
+                    var numStars=30;
+                    for (var c = 1; c < numStars; c++) {
+                        (function () {
+                            var $starImage = $('<image src="star.png" width="1%" class="animated" style="'
+                                    + 'position:absolute; pointer-events: none;'
+                                    +'transform: rotate('+360*c/numStars+'deg)'
+                                    + '"/>');
+                            $starImages.push($starImage);
+                            $starImage.css({top: offset.top, left: offset.left});
+                            $starImage.appendTo("body");
+                            var angle=2*Math.PI*c/numStars;
+                            var radius=r*(.5+Math.random()*.5)
+                            var rotation=(720*(0.5-Math.random()));
+                            
+                            rotation+=mathSign(rotation)*360;
+                            setTimeout(function () {
+                                $starImage.css({
+                                    top: offset.top + radius*Math.cos(angle), 
+                                    left: offset.left + radius*Math.sin(angle),
+                                    width:"20%",
+                                    transform: "rotate("+rotation+"deg)",
+                                    opacity: 0
+                                });
+                            }, 1);
+                            setTimeout(function () {
+                                $starImage.remove();
+                            }, 1*1000);
+                        }())
+
+                    }
+                }
+
+                function drawScore() {
+                    $("#scoreDiv").html("Score: " + parseInt(currentScore));
+                    $muncherImage[0].style.left = "" + parseInt(-4 + (7 * currentScore)) + "%";
+                    for (var score in $remainingCandies) {
+                        if (score <= currentScore) {
+                            $candyImage = $remainingCandies[score];
+                            var offset=$candyImage.offset();
+                            $candyImage.hide();
+                            delete $remainingCandies[score];
+                            var $candy = $('<image src="candy.png" width="1%" class="animated" style="position:absolute; pointer-events: none;"/>');
+                            $candy.css({top:offset.top,left:offset.left});
+                            $candy.appendTo("body");
+                            setTimeout(function () {
+                                var newOffset =scoreCandyImage.offset();
+                                $candy.css({width:"10%",transform: "rotate(720deg)",opacity: .9,
+                                top:newOffset.top,left:newOffset.left
+                                });
+                            }, 1);
+                            setTimeout(function () {
+                                $candy.remove();
+                            }, 1*1000);
+                            candiesEaten++;
+                            break;
+                        }
+                    }
+                    $("#candiesEatenLabel").html("" + candiesEaten);
+                }
+
+                function askNewQuestion() {
+                    gameState.formulateQuestion();
+                    $("#questionDiv").html("" + gameState.firstNumber
+                            + " X "
+                            + gameState.secondNumber
+                            + " = ?")
+                }
+
+            });
+
+
+            function GameState() {
+                this.MAX_NUMBER = 89;
+                this.formulateQuestion = function () {
+                    this.firstNumber = Math.floor(Math.random() * 9);
+                    this.secondNumber = Math.floor(Math.random() * 9);
+                    this.rightAnswer = this.firstNumber * this.secondNumber;
+                }
+                this.tryAnswer = function (solution) {
+                    return solution == this.rightAnswer;
+                }
+                return this;
+            }
+
+        </script>
+    </head>
+    <body>
+        <div id="numCandiesDiv" style="width: 100%">
+            <div id="candiesEatenLabel" style="position:absolute;right: 8%;font-size: 1cm" >XX</div>
+            <image  src="candy.png" id="scoreCandyImage" width="7%" style="position:absolute;left:92%"/>
+        </div>
+        <h1 id="questionDiv" style="font-size: 2cm; margin:0.1cm"></h1>
+        <br>
+        <div id="answersDiv"></div>
+        <br>
+        <div id="scoreDiv">SCORE: </div>
+        <br>
+        <div id="scoreVisualizationDiv" style="width: 100%;position: absolute">
+            <image id="muncherImage" src="muncher.png" width="7%" class "animated" style="position:absolute;left: 0%"/>
+        </div>
+
+    </body>
+</html>
