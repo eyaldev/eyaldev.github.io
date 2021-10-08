@@ -34,21 +34,28 @@ and open the template in the editor.
                 Sounds.correctAnswer.volume = 0.3;
                 var $muncherImage = $("#muncherImage");
                 var $remainingCandies = {};
-                for (var c = 0; c <= gameState.MAX_NUMBER; c++) {
+                var buttons=[7,8,9,4,5,6,1,2,3,0]
+                for (var c of buttons) {
                     var name = "" + c;
                     if (name.length < 2) {
                         name = " " + name;
                     }
-                    var $answer = $('<input type="button" value="' + name + '" class="header" style="padding:0px;margin: 2px; font-size: .6cm; font-family: monospace" />');
+                    var $answer = $('<input type="button" value="' + name + '" class="header" style="padding:0px;margin: 2px; font-size: 2cm; font-family: monospace" />');
                     (function (c) {
                         $answer.click(function () {
-                            if (tryAnswer(c)) {
+                            var currentNumber=parseInt($("#answerDiv").html());
+                            if(isNaN(currentNumber)){
+                                currentNumber=0;
+                            }
+                            currentNumber=parseInt(currentNumber+""+c);
+                            $("#answerDiv").html(currentNumber);
+                            if (tryAnswer(currentNumber)) {
                                 makeFireworks(this);
                             }
                         })
                     })(c);
                     $answer.appendTo($("#answersDiv"));
-                    if ((c % 10) == 9) {
+                    if ((c % 3) == 0) {
                         $("#answersDiv").append("<br>");
                     }
                 }
@@ -76,12 +83,15 @@ and open the template in the editor.
                         Sounds.correctAnswer.play();
 
                     } else {
-                        currentScore--;
-                        if (currentScore < 0) {
-                            currentScore = 0;
+                        if((""+solution).length==(""+gameState.rightAnswer).length){
+                           currentScore--;
+                           $("#answerDiv").html("?");
+                            if (currentScore < 0) {
+                                currentScore = 0;
+                            }
+                            Sounds.wrongAnswer.currentTime = 0;
+                            Sounds.wrongAnswer.play();
                         }
-                        Sounds.wrongAnswer.currentTime = 0;
-                        Sounds.wrongAnswer.play();
                     }
                     drawScore();
                     return correct;
@@ -158,14 +168,15 @@ and open the template in the editor.
                     $("#questionDiv").html("" + gameState.firstNumber
                             + " X "
                             + gameState.secondNumber
-                            + " = ?")
+                            + " = ")
+                     $("#answerDiv").html("?")
                 }
 
             });
 
 
             function GameState() {
-                this.MAX_NUMBER = 89;
+                this.MAX_NUMBER = 9;
                 this.formulateQuestion = function () {
                     this.firstNumber = Math.floor(Math.random() * 9);
                     this.secondNumber = Math.floor(Math.random() * 9);
@@ -185,6 +196,7 @@ and open the template in the editor.
             <image  src="candy.png" id="scoreCandyImage" width="7%" style="position:absolute;left:92%"/>
         </div>
         <h1 id="questionDiv" style="font-size: 2cm; margin:0.1cm"></h1>
+        <h2 id="answerDiv" style="font-size: 2cm; margin:0.1cm">?</h2>
         <br>
         <div id="answersDiv"></div>
         <br>
