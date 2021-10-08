@@ -172,7 +172,7 @@ and open the template in the editor.
                 this.MAX_NUMBER = 9;
                 this.formulateQuestion = function () {
                     this.firstNumber = Math.floor(Math.random() * 10);
-                    this.secondNumber = Math.floor(Math.random() * 10);
+                    this.secondNumber = 1 + Math.floor(Math.random() * 9);
                     this.rightAnswer = this.firstNumber * this.secondNumber;
                     if(!multiplicationGame){
                         var toSwap=this.firstNumber;
