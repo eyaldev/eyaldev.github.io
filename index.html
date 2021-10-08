@@ -20,10 +20,10 @@ and open the template in the editor.
         <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
 
         <script type="text/javascript">
+            var gameState = new GameState();
             $(function () {
                 var currentScore = 0;
                 var candiesEaten = 0;
-                var gameState = new GameState();
                 var $scoreVisualizationDiv = $("#scoreVisualizationDiv");
                 var scoreCandyImage=$("#scoreCandyImage");
                 var Sounds = {
@@ -163,30 +163,44 @@ and open the template in the editor.
                     $("#candiesEatenLabel").html("" + candiesEaten);
                 }
 
-                function askNewQuestion() {
-                    gameState.formulateQuestion();
-                    $("#questionDiv").html("" + gameState.firstNumber
-                            + " X "
-                            + gameState.secondNumber
-                            + " = ")
-                     $("#answerDiv").html("?")
-                }
+                
 
             });
 
-
+ 
             function GameState() {
                 this.MAX_NUMBER = 9;
                 this.formulateQuestion = function () {
-                    this.firstNumber = Math.floor(Math.random() * 9);
-                    this.secondNumber = Math.floor(Math.random() * 9);
+                    this.firstNumber = Math.floor(Math.random() * 10);
+                    this.secondNumber = Math.floor(Math.random() * 10);
                     this.rightAnswer = this.firstNumber * this.secondNumber;
-                }
+                    if(!multiplicationGame){
+                        var toSwap=this.firstNumber;
+                        this.firstNumber=this.rightAnswer;
+                        this.rightAnswer=toSwap;
+                    }
+            }
                 this.tryAnswer = function (solution) {
                     return solution == this.rightAnswer;
                 }
                 return this;
             }
+            
+            var multiplicationGame=true;
+            function changeGameType(){
+                multiplicationGame=!multiplicationGame;
+                askNewQuestion();
+            }
+
+                function askNewQuestion() {
+                    gameState.formulateQuestion();
+                    var operation=(multiplicationGame?"X":":");
+                    $("#questionDiv").html("" + gameState.firstNumber
+                            + " "+operation+" "
+                            + gameState.secondNumber
+                            + " = ")
+                     $("#answerDiv").html("?")
+                }
 
         </script>
     </head>
@@ -205,6 +219,9 @@ and open the template in the editor.
         <div id="scoreVisualizationDiv" style="width: 100%;position: absolute">
             <image id="muncherImage" src="muncher.png" width="7%" class "animated" style="position:absolute;left: 0%"/>
         </div>
+        <br>
+        <br>
+        <input type="button" onclick="changeGameType()" value=":X" style="padding:0px;margin: 2px; font-size: 1cm; font-family: monospace" />
 
     </body>
 </html>
